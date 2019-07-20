@@ -7,11 +7,24 @@ const Gallery = props => {
     const context = React.useContext(homeContext);
 
     const [breedImage, setBreedImage] = React.useState([]);
+    let cachedBreedName;
+    let cachedBreedImage;
 
     console.log("TCL: context", context);
     useEffect(() => {
         console.log("fetch data here");
 
+        if (!!context.homeState.BreedName) {
+            cachedBreedName = localStorage.getItem('breedName');
+            cachedBreedImage = localStorage.getItem('breedImage');
+        }
+        if (!!cachedBreedName && !!context.homeState.BreedName && (cachedBreedName === context.homeState.BreedName)){
+            if (!!cachedBreedImage && (typeof cachedBreedImage == 'string')) {
+                setBreedImage(cachedBreedImage.split(','));
+                context.dispatch({ type: "setBreedResult", breedImage });
+            }
+        }
+        else{
         axios
             .get(
                 `https://dog.ceo/api/breed/${
@@ -23,12 +36,17 @@ const Gallery = props => {
                 const { message } = response.data;
                 console.log("TCL: Dashboard -> message", message);
                 setBreedImage(message);
+                if (!!context.homeState.BreedName){
+                    localStorage.setItem('breedName', context.homeState.BreedName);
+                    localStorage.setItem('breedImage', message);
+                }
                 context.dispatch({ type: "setBreedResult", breedImage });
             })
             .catch(error => {
                 console.log("Error in useEffect nameAdd", error);
                 alert("No Data available, reload");
             });
+        }
     }, []);
 
     const ImageRender = breedImage.map((img, key) => {
